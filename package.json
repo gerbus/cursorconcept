@@ -5,5 +5,15 @@
   "main": "index.js",
   "repository": "https://github.com/gerbus/cursorconcept",
   "author": "Christopher X Gerber <christopher.x.gerber@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.3",
+    "socket.io": "^4.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  },
+  "scripts": {
+    "dev": "nodemon ./index.js localhost 3000"
+  }
 }
