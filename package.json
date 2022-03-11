@@ -1,0 +1,9 @@
+{
+  "name": "cursorconcept",
+  "version": "1.0.0",
+  "description": "The self is constructed",
+  "main": "index.js",
+  "repository": "https://github.com/gerbus/cursorconcept",
+  "author": "Christopher X Gerber <christopher.x.gerber@gmail.com>",
+  "license": "MIT"
+}
