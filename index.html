@@ -19,14 +19,14 @@
       position: relative;
     }
 
-    .cursor {
+    .pointer {
       position: absolute;
     }
   </style>
 </head>
 
 <body>
-  <svg id="cursor" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+  <svg id="pointer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
     width="28px" height="28px" viewBox="0 0 28 28" enable-background="new 0 0 28 28" xml:space="preserve">
     <polygon fill="#FF0000" points="8.2,20.9 8.2,4.9 19.8,16.5 13,16.5 12.6,16.6 " />
     <polygon fill="#FF0000" points="17.3,21.6 13.7,23.1 9,12 12.7,10.5 " />
@@ -34,7 +34,7 @@
     <polygon points="9.2,7.3 9.2,18.5 12.2,15.6 12.6,15.5 17.4,15.5 " />
   </svg>
   <div id="canvas">
-    <div id="my_cursor" class="cursor">
+    <div id="my_pointer" class="pointer">
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="28px"
         height="28px" viewBox="0 0 28 28" enable-background="new 0 0 28 28" xml:space="preserve">
         <polygon fill="#00FF00" points="8.2,20.9 8.2,4.9 19.8,16.5 13,16.5 12.6,16.6 " />
@@ -51,15 +51,15 @@
     const socket = io();
     const canvas = document.getElementById('canvas');
     const canvasCoords = canvas.getBoundingClientRect();
-    const cursor = document.getElementById('cursor')
+    const pointer = document.getElementById('pointer')
 
-    const updateCursor = (id, x, y) => {
-      const cursor = document.getElementById(id);
-      cursor.style.left = x + 'px';
-      cursor.style.top = y + 'px';
+    const updatePointer = (id, x, y) => {
+      const pointer = document.getElementById(id);
+      pointer.style.left = x + 'px';
+      pointer.style.top = y + 'px';
     }
 
-    // My cursor (local shadow)
+    // My pointer (local shadow)
     canvas.addEventListener('pointermove', (event) => {
       event.preventDefault();
       const coords = {
@@ -71,27 +71,27 @@
       socket.emit('pointer', coords)
 
       // update local shadow
-      updateCursor('my_cursor', coords.x, coords.y)
+      updatePointer('my_pointer', coords.x, coords.y)
     })
 
-    // Other peoples' cursors
+    // Other peoples' pointers
     const addPointer = id => {
       pointerIds.push(id);
 
-      const newCursorDiv = document.createElement('div');
-      const newCursor = cursor.cloneNode(true);
-      newCursor.removeAttribute('id');
-      newCursorDiv.appendChild(newCursor);
-      newCursorDiv.setAttribute('id', id);
-      newCursorDiv.setAttribute('class', 'cursor')
-      canvas.appendChild(newCursorDiv);
+      const newPointerDiv = document.createElement('div');
+      const newPointer = pointer.cloneNode(true);
+      newPointer.removeAttribute('id');
+      newPointerDiv.appendChild(newPointer);
+      newPointerDiv.setAttribute('id', id);
+      newPointerDiv.setAttribute('class', 'pointer')
+      canvas.appendChild(newPointerDiv);
     }
     const removePointer = id => {
       const index = pointerIds.indexOf(id);
       if (index > -1) pointerIds.splice(index, 1);
 
-      const cursor = document.getElementById(id);
-      cursor.remove();
+      const pointer = document.getElementById(id);
+      pointer.remove();
     }
     socket.on('pointer', ({ coords, id }) => {
       console.log(`received from ${id}`)
@@ -101,7 +101,7 @@
         console.log(`\tnew pointer`);
       } else {
         console.log(`\tpointer moved`);
-        updateCursor(id, coords.x, coords.y);
+        updatePointer(id, coords.x, coords.y);
       }
     })
     socket.on('dead pointer', id => {
