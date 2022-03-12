@@ -11,14 +11,13 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('client connected', socket.id);
-  socket.broadcast.emit('new pointer', socket.id)
   socket.on('pointer', coords => {
-    //console.log(coords)
-    socket.broadcast.emit('pointer', { id: socket.id, coords: coords })
+    console.log('sending coords from ', socket.id)
+    io.emit('pointer', { id: socket.id, coords: coords })
   })
   socket.on('disconnect', () => {
     console.log('client disconnected', socket.id);
-    socket.broadcast.emit('dead pointer', socket.id);
+    io.emit('dead pointer', socket.id);
   });
 });
 
