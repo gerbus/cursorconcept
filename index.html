@@ -4,6 +4,7 @@
 <head>
   <title>Self is an illustion</title>
   <style>
+    /* mobile first */
     body {
       margin: 0;
       padding-bottom: 3rem;
@@ -12,15 +13,25 @@
     }
 
     #canvas {
-      margin: 10vh 10vw;
-      width: 80vw;
-      height: 80vh;
+      margin: 10vh 0;
+      height: 80vw;
       background: black;
       position: relative;
     }
 
+    #my_pointer {
+      z-index: 1000;
+    }
     .pointer {
       position: absolute;
+    }
+
+    /* desktop overrides */
+    @media (pointer:fine) and (hover:hover) {
+      #canvas {
+        margin: 10vh;
+        width: 80vw;
+      }
     }
   </style>
 </head>
@@ -47,39 +58,68 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    // Detect device type
+    // let devicePointerType = null
+    // if (matchMedia('(pointer:fine)').matches) {
+    //   devicePointerType = 'fine'
+    // } else if (matchMedia('(pointer:coarse)').matches) {
+    //   devicePointerType = 'coarse'
+    // }
+    // let deviceSupportsHover = false
+    // if (matchMedia('(hover:hover)').matches) {
+    //   deviceSupportsHover = true
+    // }
+    // let deviceType = null
+    // if (!deviceSupportsHover && devicePointerType === 'coarse') deviceType = 'touch'
+    // if (deviceSupportsHover && devicePointerType === 'fine') deviceType = 'pc'
+    // console.log('Device Type: ', deviceType)
+
+
     const pointerIds = [];
     const socket = io();
     const canvas = document.getElementById('canvas');
     const canvasCoords = canvas.getBoundingClientRect();
-    const pointer = document.getElementById('pointer')
+    // console.log(canvasCoords)
+    const pointerTemplate = document.getElementById('pointer')
 
-    const updatePointer = (id, x, y) => {
-      const pointer = document.getElementById(id);
-      pointer.style.left = x + 'px';
-      pointer.style.top = y + 'px';
+    const updateElementPosition = (id, x, y) => {
+      const element = document.getElementById(id);
+      element.style.left = parseInt(x * (canvasCoords.right - canvasCoords.left)) + 'px';
+      element.style.top = parseInt(y * (canvasCoords.bottom - canvasCoords.top)) + 'px';
     }
 
     // My pointer (local shadow)
-    canvas.addEventListener('pointermove', (event) => {
+    const moveHandler = (x, y) => {
       event.preventDefault();
-      const coords = {
-        x: parseInt(event.clientX - canvasCoords.left - 8),
-        y: parseInt(event.clientY - canvasCoords.top - 7)
+      const coordsRelative = {
+        x: (x - canvasCoords.left - 8.0) / (canvasCoords.right - canvasCoords.left),
+        y: (y - canvasCoords.top - 7.0) / (canvasCoords.bottom - canvasCoords.top)
       }
+      // console.log(coordsRelative)
 
       // send to others
-      socket.emit('pointer', coords)
+      socket.emit('pointer', coordsRelative)
 
       // update local shadow
-      updatePointer('my_pointer', coords.x, coords.y)
-    })
+      updateElementPosition('my_pointer', coordsRelative.x, coordsRelative.y)
+    }
+    const touchMoveHandler = e => {
+      var evt = (typeof e.originalEvent === 'undefined') ? e : e.originalEvent;
+      var touch = evt.touches[0] || evt.changedTouches[0];
+      x = touch.pageX;
+      y = touch.pageY;
+      moveHandler(x, y)
+    }
+    canvas.addEventListener('pointermove', e => moveHandler(e.clientX, e.clientY))
+    canvas.addEventListener('touchmove', e => touchMoveHandler(e))
+    canvas.addEventListener('touchstart', e => touchMoveHandler(e))
 
     // Other peoples' pointers
     const addPointer = id => {
       pointerIds.push(id);
 
       const newPointerDiv = document.createElement('div');
-      const newPointer = pointer.cloneNode(true);
+      const newPointer = pointerTemplate.cloneNode(true);
       newPointer.removeAttribute('id');
       newPointerDiv.appendChild(newPointer);
       newPointerDiv.setAttribute('id', id);
@@ -91,21 +131,23 @@
       if (index > -1) pointerIds.splice(index, 1);
 
       const pointer = document.getElementById(id);
-      pointer.remove();
+      try {
+        pointer.remove();
+      } catch (e) {}
     }
     socket.on('pointer', ({ coords, id }) => {
-      console.log(`received from ${id}`)
+      // console.log(`received from ${id}`)
       const pointerIsNew = !pointerIds.includes(id);
       if (pointerIsNew) {
         addPointer(id);
-        console.log(`\tnew pointer`);
+        // console.log(`\tnew pointer`);
       } else {
-        console.log(`\tpointer moved`);
-        updatePointer(id, coords.x, coords.y);
+        // console.log(`\tpointer moved`);
+        updateElementPosition(id, coords.x, coords.y);
       }
     })
     socket.on('dead pointer', id => {
-      console.log(`dead pointer ${id}`);
+      // console.log(`dead pointer ${id}`);
       removePointer(id);
     })
   </script>
