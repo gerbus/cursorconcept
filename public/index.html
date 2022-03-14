@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Self is an illustion</title>
+  <title>Self is all</title>
   <style>
     /* mobile first */
     body {
@@ -12,50 +12,83 @@
       background-color: #888
     }
 
+    h1 {
+      margin-left: 1rem;
+    }
+
     #canvas {
-      margin: 10vh 0;
-      height: 80vw;
+      margin: 2rem 0;
+      height: 100vmin;
       background: black;
       position: relative;
+    }
+
+    #canvas #earth {
+      width: 56%;
+      margin: 22%;
+      animation: rotation 480s infinite linear;
+    }
+    @keyframes rotation {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    #pointer_template {
+      display: none;
     }
 
     #my_pointer {
       z-index: 1000;
     }
+
     .pointer {
       position: absolute;
     }
 
     /* desktop overrides */
-    @media (pointer:fine) and (hover:hover) {
+    @media (pointer:fine) and (hover:hover) and (min-width: 600px) {
+      h1 {
+        margin-left: 10vw;
+      }
+
       #canvas {
-        margin: 10vh;
-        width: 80vw;
+        margin: 2rem auto;
+        width: 80vmin;
+        height: 80vmin;
       }
     }
   </style>
 </head>
 
 <body>
-  <svg id="pointer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+  <svg id="pointer_template" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
     width="28px" height="28px" viewBox="0 0 28 28" enable-background="new 0 0 28 28" xml:space="preserve">
-    <polygon fill="#FF0000" points="8.2,20.9 8.2,4.9 19.8,16.5 13,16.5 12.6,16.6 " />
-    <polygon fill="#FF0000" points="17.3,21.6 13.7,23.1 9,12 12.7,10.5 " />
+    <polygon fill="#00ff00" points="8.2,20.9 8.2,4.9 19.8,16.5 13,16.5 12.6,16.6 " />
+    <polygon fill="#00ff00" points="17.3,21.6 13.7,23.1 9,12 12.7,10.5 " />
     <rect x="12.5" y="13.6" transform="matrix(0.9221 -0.3871 0.3871 0.9221 -5.7605 6.5909)" width="2" height="8" />
     <polygon points="9.2,7.3 9.2,18.5 12.2,15.6 12.6,15.5 17.4,15.5 " />
   </svg>
+  <ol>
+    <li>Circle your finger/pointer around the earth</li>
+    <li>Take 3 deep breaths</li>
+    <li>Share a few words</li>
+  </ol>
+
   <div id="canvas">
+    <img id="earth" src="ipcc_bluemarble_west_lrg.jpeg" />
     <div id="my_pointer" class="pointer">
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="28px"
         height="28px" viewBox="0 0 28 28" enable-background="new 0 0 28 28" xml:space="preserve">
-        <polygon fill="#00FF00" points="8.2,20.9 8.2,4.9 19.8,16.5 13,16.5 12.6,16.6 " />
-        <polygon fill="#00FF00" points="17.3,21.6 13.7,23.1 9,12 12.7,10.5 " />
+        <polygon fill="#ff0000" points="8.2,20.9 8.2,4.9 19.8,16.5 13,16.5 12.6,16.6 " />
+        <polygon fill="#ff0000" points="17.3,21.6 13.7,23.1 9,12 12.7,10.5 " />
         <rect x="12.5" y="13.6" transform="matrix(0.9221 -0.3871 0.3871 0.9221 -5.7605 6.5909)" width="2" height="8" />
         <polygon points="9.2,7.3 9.2,18.5 12.2,15.6 12.6,15.5 17.4,15.5 " />
       </svg>
     </div>
   </div>
-
   <script src="/socket.io/socket.io.js"></script>
   <script>
     // Detect device type
@@ -74,15 +107,27 @@
     // if (deviceSupportsHover && devicePointerType === 'fine') deviceType = 'pc'
     // console.log('Device Type: ', deviceType)
 
+    const throttle = (callback, limit) => {
+      let waiting = false;                      // Initially, we're not waiting
+      return function () {                      // We return a throttled function
+        if (!waiting) {                       // If we're not waiting
+          callback.apply(this, arguments);  // Execute users function
+          waiting = true;                   // Prevent future invocations
+          setTimeout(function () {          // After a period of time
+            waiting = false;              // And allow future invocations
+          }, limit);
+        }
+      }
+    }
 
     const pointerIds = [];
     const socket = io();
     const canvas = document.getElementById('canvas');
-    const canvasCoords = canvas.getBoundingClientRect();
     // console.log(canvasCoords)
-    const pointerTemplate = document.getElementById('pointer')
+    const pointerTemplate = document.getElementById('pointer_template')
 
     const updateElementPosition = (id, x, y) => {
+      const canvasCoords = canvas.getBoundingClientRect();
       const element = document.getElementById(id);
       element.style.left = parseInt(x * (canvasCoords.right - canvasCoords.left)) + 'px';
       element.style.top = parseInt(y * (canvasCoords.bottom - canvasCoords.top)) + 'px';
@@ -91,6 +136,7 @@
     // My pointer (local shadow)
     const moveHandler = (x, y) => {
       event.preventDefault();
+      const canvasCoords = canvas.getBoundingClientRect();
       const coordsRelative = {
         x: (x - canvasCoords.left - 8.0) / (canvasCoords.right - canvasCoords.left),
         y: (y - canvasCoords.top - 7.0) / (canvasCoords.bottom - canvasCoords.top)
@@ -110,9 +156,9 @@
       y = touch.pageY;
       moveHandler(x, y)
     }
-    canvas.addEventListener('pointermove', e => moveHandler(e.clientX, e.clientY))
-    canvas.addEventListener('touchmove', e => touchMoveHandler(e))
-    canvas.addEventListener('touchstart', e => touchMoveHandler(e))
+    canvas.addEventListener('pointermove', throttle(e => moveHandler(e.clientX, e.clientY), 25))
+    canvas.addEventListener('touchmove', throttle(e => touchMoveHandler(e), 25))
+    canvas.addEventListener('touchstart', throttle(e => touchMoveHandler(e), 25))
 
     // Other peoples' pointers
     const addPointer = id => {
@@ -133,7 +179,7 @@
       const pointer = document.getElementById(id);
       try {
         pointer.remove();
-      } catch (e) {}
+      } catch (e) { }
     }
     socket.on('pointer', ({ coords, id }) => {
       // console.log(`received from ${id}`)
